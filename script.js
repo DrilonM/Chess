@@ -11,7 +11,6 @@ let originY = window.innerHeight / 2 - 400;
 
 // To do:
 // Add castling
-// Add enn passant
 // Add promotion
 // Add check / mate
 
@@ -45,6 +44,11 @@ class Board {
         this.pieceImages = {};
         this.turn = [0b01000, 0b10000]
         this.moveNumber = 1;
+
+        this.lastMoved = null;
+        this.lastMovedIndex = null;
+
+        this.enPessantTarget = false;
     }
 
     drawBoard() {
@@ -163,14 +167,11 @@ class Board {
             let mouseX = e.offsetX;
             let mouseY = e.offsetY;
 
-
-
             for (let i = 0; i < this.squares.length; i++) {
                 let x = originX + (i % 8) * tileSize;
                 let y = originY + Math.floor(i / 8) * tileSize;
 
                 if (mouseX >= x && mouseX <= x + tileSize && mouseY >= y && mouseY <= y + tileSize && this.squares[i] !== 0) {
-
                     this.draggedPiece = this.squares[i];
                     this.draggedPieceIndex = i;
 
@@ -236,15 +237,29 @@ class Board {
                     return;
                 }
 
+                let piece = this.draggedPiece;
+                let index = this.draggedPieceIndex;
+
                 if (newFile < 0 || newFile > 7 || newRank < 0 || newRank > 7) {
                     newIndex = this.draggedPieceIndex;
                 } else {
                     this.squares[this.draggedPieceIndex] = 0;
                 }
 
+                this.lastMoved = this.draggedPiece
+                this.lastMovedIndex = newIndex
+
                 isDragging = this.colorTile("#868686", newIndex)
 
+                this.draggedPiece = null;
+                this.draggedPieceIndex = null;
+
                 this.moveNumber++;
+                this.enPessantTarget = false;
+
+                if ((piece & 0b111) === 2 && (index - newIndex > Math.abs(8) || newIndex - index > Math.abs(8))) {
+                    this.enPessantTarget = true;
+                }
             }
         });
     }
@@ -277,34 +292,45 @@ class Board {
         return rowDiff <= 1 && colDiff <= 1;
     }
     pawnMove(currentPiece, currentIndex, newIndex) {
-        const isWhite = currentPiece === 18;
-        const direction = isWhite ? 1 : -1;
-        const startRow = isWhite ? 1 : 6;
+        let isWhite = currentPiece === 18;
+        let direction = isWhite ? 1 : -1;
+        let startRow = isWhite ? 1 : 6;
 
-        const row1 = Math.floor(currentIndex / 8);
-        const col1 = currentIndex % 8;
-        const row2 = Math.floor(newIndex / 8);
-        const col2 = newIndex % 8;
+        let row1 = Math.floor(currentIndex / 8);
+        let col1 = currentIndex % 8;
+        let row2 = Math.floor(newIndex / 8);
+        let col2 = newIndex % 8;
 
-        const forwardMove = col1 === col2;
-        const distance = row2 - row1;
+        let distance = row2 - row1;
 
-        if (forwardMove) {
+        if (col1 === col2) {
             if (this.squares[newIndex] !== 0) return false;
             if (distance === direction) return true;
             if (row1 === startRow && distance === 2 * direction) {
-                const intermediateIndex = currentIndex + 8 * direction;
+                let intermediateIndex = currentIndex + 8 * direction;
                 return this.squares[intermediateIndex] === 0;
             }
         }
 
-        // Diagonal capture
+        if (this.enPessantTarget) {
+            if (Math.abs(col2 - col1) === 1 && distance === direction) {
+
+                let validRow = isWhite ? row1 === 4 : row1 === 3;
+
+                if (validRow && (newIndex + 8 === this.lastMovedIndex || newIndex - 8 === this.lastMovedIndex)) {
+
+                    return true;
+                }
+            }
+        }
+
         if (Math.abs(col2 - col1) === 1 && distance === direction) {
             return this.squares[newIndex] !== 0;
         }
 
         return false;
     }
+
     knightMove(currentIndex, newIndex) {
         const currentRow = Math.floor(currentIndex / 8);
         const currentCol = currentIndex % 8;
@@ -401,8 +427,20 @@ class Board {
     }
     colorTile(color, newIndex) {
         this.squares[newIndex] = this.draggedPiece;
-        this.draggedPiece = null;
-        this.draggedPieceIndex = null;
+
+        console.log(this.draggedPiece + " " + this.lastMovedIndex)
+
+        console.log(this.draggedPiece & 0b111)
+
+        console.log(this.squares[newIndex + 8] )
+
+        if ((this.draggedPiece & 0b111) === 2) {
+            if (this.squares[newIndex - 8] === 18 || this.squares[newIndex - 8] === 10) {
+                this.squares[newIndex - 8] = 0;
+            } else if (this.squares[newIndex + 8] === 18 || this.squares[newIndex + 8] === 10) {
+                this.squares[newIndex + 8] = 0;
+            }
+        }
 
         c.clearRect(0, 0, canvas.width, canvas.height)
 
