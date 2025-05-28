@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title> Chess </title>
+    <style>
+        body {
+            margin: 0;
+        }
+        button {
+            padding: 20px;
+            font-size: 20px;
+        }
+        .container {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            margin-top: 5vh;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <button onclick="startGame('rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR')"> Start New Game </button>
+        <canvas></canvas>
+    </div>
+</body>
+</html>
+<script src="script.js"></script>
