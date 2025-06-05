@@ -44,10 +44,9 @@ class Board {
         this.pieceImages = {};
         this.turn = [0b01000, 0b10000]
         this.moveNumber = 1;
-
         this.lastMoved = null;
         this.lastMovedIndex = null;
-
+        this.enPassantCapture = false;
         this.enPessantTarget = false;
     }
 
@@ -259,12 +258,15 @@ class Board {
 
                 if ((piece & 0b111) === 2 && (index - newIndex > Math.abs(8) || newIndex - index > Math.abs(8))) {
                     this.enPessantTarget = true;
+                    console.log("Target")
                 }
             }
         });
     }
     canCapture(currentPiece, currentIndex, newIndex) {
-        // This checks colors;
+        // This function checks whether the piece it's trying
+        // to capture is of the opposite color
+
                 if ((currentPiece & Piece.White) !== 0) {
                     if ((this.squares[newIndex] & Piece.Black) !== 0) {
                         return true;
@@ -314,11 +316,10 @@ class Board {
 
         if (this.enPessantTarget) {
             if (Math.abs(col2 - col1) === 1 && distance === direction) {
-
                 let validRow = isWhite ? row1 === 4 : row1 === 3;
 
                 if (validRow && (newIndex + 8 === this.lastMovedIndex || newIndex - 8 === this.lastMovedIndex)) {
-
+                    this.enPassantCapture = true;
                     return true;
                 }
             }
@@ -330,7 +331,6 @@ class Board {
 
         return false;
     }
-
     knightMove(currentIndex, newIndex) {
         const currentRow = Math.floor(currentIndex / 8);
         const currentCol = currentIndex % 8;
@@ -428,18 +428,13 @@ class Board {
     colorTile(color, newIndex) {
         this.squares[newIndex] = this.draggedPiece;
 
-        console.log(this.draggedPiece + " " + this.lastMovedIndex)
-
-        console.log(this.draggedPiece & 0b111)
-
-        console.log(this.squares[newIndex + 8] )
-
-        if ((this.draggedPiece & 0b111) === 2) {
+        if ((this.draggedPiece & 0b111) === 2 && this.enPassantCapture) {
             if (this.squares[newIndex - 8] === 18 || this.squares[newIndex - 8] === 10) {
                 this.squares[newIndex - 8] = 0;
             } else if (this.squares[newIndex + 8] === 18 || this.squares[newIndex + 8] === 10) {
                 this.squares[newIndex + 8] = 0;
             }
+            this.enPassantCapture = false;
         }
 
         c.clearRect(0, 0, canvas.width, canvas.height)
@@ -464,9 +459,6 @@ function isDigit(char) {
 function isUpper(char) {
     return /^[A-Z]$/.test(char);
 }
-
-
-
 
 function startGame(fen) {
     c.clearRect(0, 0, canvas.width, canvas.height);
