@@ -18,12 +18,46 @@
             align-items: center;
             margin-top: 5vh;
         }
+
+        #moveList {
+            box-sizing: border-box;
+            margin-top: 100px;
+            border: 2px solid black;
+            border-radius: 20px;
+            background: #3e3e3e;
+            top: 0;
+            height: 800px;
+            width: 240px;
+            font-family: 'Courier New', monospace;
+            font-size: 16px;
+            color: white;
+            padding: 25px;
+            font-weight: bold;
+            overflow-y: auto;
+
+        }
+
+        .container > div {
+
+            display: flex;
+            justify-content: space-evenly;
+
+        }
     </style>
 </head>
 <body>
     <div class="container">
+
         <button onclick="startGame('rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR')"> Start New Game </button>
-        <canvas></canvas>
+
+        <div>
+            <div>
+                <canvas></canvas>
+            </div>
+            <div>
+                <div id="moveList"> </div>
+            </div>
+        </div>
     </div>
 </body>
 </html>

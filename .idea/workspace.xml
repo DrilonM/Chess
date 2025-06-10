@@ -5,6 +5,7 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="1dff4cf6-8b3e-46a0-8fc7-f367d3291bc8" name="Changes" comment="added en passant">
+      <change beforePath="$PROJECT_DIR$/index.html" beforeDir="false" afterPath="$PROJECT_DIR$/index.html" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/script.js" beforeDir="false" afterPath="$PROJECT_DIR$/script.js" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -57,9 +58,9 @@
       <workItem from="1748386564250" duration="273000" />
       <workItem from="1748432331363" duration="6965000" />
       <workItem from="1748449061551" duration="6363000" />
-      <workItem from="1749255240197" duration="1652000" />
-      <workItem from="1749297926026" duration="9377000" />
-      <workItem from="1749310970570" duration="2168000" />
+      <workItem from="1749560230136" duration="13000" />
+      <workItem from="1749560318845" duration="9221000" />
+      <workItem from="1749591022385" duration="4072000" />
     </task>
     <task id="LOCAL-00001" summary="Added board + pieces. Added basic movement of pieces.">
       <created>1739380951063</created>
