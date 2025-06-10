@@ -10,9 +10,11 @@ let originX = window.innerWidth / 2 - 400;
 let originY = window.innerHeight / 2 - 400;
 
 // To do:
+
+// Add check / pinning / mate
 // Add castling
 // Add promotion
-// Add check / mate
+// Save all moves played
 
 function resizeCanvas(board) {
     canvas.width = window.innerWidth;
@@ -48,6 +50,8 @@ class Board {
         this.lastMovedIndex = null;
         this.enPassantCapture = false;
         this.enPessantTarget = false;
+
+        this.kingState = false;
     }
 
     drawBoard() {
@@ -141,21 +145,21 @@ class Board {
         let validMoves = []
 
         for (let tile in this.squares) {
-            if (this.isValid(currentPiece, currentIndex, parseInt(tile))) {
+            if (this.isLegal(currentPiece, currentIndex, parseInt(tile))) {
                 validMoves.push(parseInt(tile))
             }
         }
 
-        this.highlightMoves(validMoves)
+        this.highlightMoves(validMoves, "gray")
     }
-    highlightMoves(validMoves) {
+    highlightMoves(validMoves, color) {
         for (let move of validMoves) {
             let x = originX + (move % 8) * tileSize + tileSize / 2;
             let y = originY + Math.floor(move / 8) * tileSize + tileSize / 2;
 
             c.beginPath();
             c.arc(x, y, 15, 0, 2 * Math.PI);
-            c.fillStyle = "gray";
+            c.fillStyle = color;
             c.fill();
         }
     }
@@ -197,6 +201,7 @@ class Board {
 
                 this.drawBoard();
                 this.drawPieces();
+
                 this.displayMoves(this.draggedPiece, this.draggedPieceIndex)
 
                 let originalX = originX + (this.draggedPieceIndex % 8) * tileSize;
@@ -208,9 +213,12 @@ class Board {
                 let image = this.pieceImages[`${color}-${piece}`];
 
                 if (image) {
-                    this.squares[this.draggedPieceIndex] = 0;
+                    c.save();
+                    c.globalAlpha = 0.5;
                     c.drawImage(image, originalX, originalY, tileSize, tileSize);
+                    c.restore();
                 }
+
                 c.globalAlpha = 1.0;
 
                 c.drawImage(image, mouseX - tileSize / 2, mouseY - tileSize / 2, tileSize, tileSize);
@@ -226,7 +234,7 @@ class Board {
                 let newRank = Math.floor((mouseX - originX) / tileSize);
                 let newIndex = newFile * 8 + newRank;
 
-                if (!this.isValid(this.draggedPiece, this.draggedPieceIndex, newIndex)) {
+                if (!this.isLegal(this.draggedPiece, this.draggedPieceIndex, newIndex)) {
                     if (newIndex === this.draggedPieceIndex) {
                         isDragging = this.colorTile("gray", newIndex)
                         return;
@@ -238,6 +246,18 @@ class Board {
 
                 let piece = this.draggedPiece;
                 let index = this.draggedPieceIndex;
+
+                this.checkState();
+
+                if (this.kingState) {
+                    if ((this.draggedPiece & 0b111) !== 1) {
+                        if (!this.canBlock(this.draggedPiece, this.draggedPieceIndex)) {
+                            newIndex = this.draggedPieceIndex;
+                            isDragging = this.colorTile("#f55538", newIndex)
+                            return;
+                        }
+                    }
+                }
 
                 if (newFile < 0 || newFile > 7 || newRank < 0 || newRank > 7) {
                     newIndex = this.draggedPieceIndex;
@@ -253,35 +273,139 @@ class Board {
                 this.draggedPiece = null;
                 this.draggedPieceIndex = null;
 
+
                 this.moveNumber++;
                 this.enPessantTarget = false;
 
                 if ((piece & 0b111) === 2 && (index - newIndex > Math.abs(8) || newIndex - index > Math.abs(8))) {
                     this.enPessantTarget = true;
-                    console.log("Target")
                 }
             }
         });
+    }
+    isValid(currentPiece, currentIndex, newIndex, forControl = false) {
+        let piece = currentPiece & 0b111;
+
+        if (piece === Piece.King) {
+            if (forControl) {
+                return this.kingMove(currentIndex, newIndex) && this.canCapture(currentPiece, currentIndex, newIndex);
+            }
+            return this.kingMove(currentIndex, newIndex)
+                && this.canCapture(currentPiece, currentIndex, newIndex)
+                && !this.getControlledSquares(this.moveNumber % 2 !== 0).has(newIndex);
+        }
+
+        if (piece === Piece.Pawn) {
+            return this.pawnMove(currentPiece, currentIndex, newIndex) && this.canCapture(currentPiece, currentIndex, newIndex);
+        }
+
+        if (piece === Piece.Knight) {
+            return this.knightMove(currentPiece, newIndex) && this.canCapture(currentPiece, currentIndex, newIndex);
+        }
+
+        if (piece === Piece.Bishop) {
+            return this.bishopMove(currentPiece, newIndex) && this.canCapture(currentPiece, currentIndex, newIndex);
+        }
+
+        if (piece === Piece.Rook) {
+            this.rookMove(currentPiece, newIndex) && this.canCapture(currentPiece, currentIndex, newIndex);
+        }
+
+        if (piece === Piece.Queen) {
+            return (this.rookMove(currentIndex, newIndex) || this.bishopMove(currentIndex, newIndex));
+        }
+
+        return false;
+    }
+
+    isLegal(currentPiece, currentIndex, newIndex, forControl = false) {
+        return this.isValid(currentPiece, currentIndex, newIndex, true) && this.canBlock(currentPiece, currentIndex);
+
     }
     canCapture(currentPiece, currentIndex, newIndex) {
         // This function checks whether the piece it's trying
         // to capture is of the opposite color
 
-                if ((currentPiece & Piece.White) !== 0) {
-                    if ((this.squares[newIndex] & Piece.Black) !== 0) {
-                        return true;
-                    } else if ((this.squares[newIndex] & Piece.White) !== 0) {
-                        return  false;
-                    }
-                } else {
-                    if ((this.squares[newIndex] & Piece.White) !== 0) {
-                        return true;
-                    } else if ((this.squares[newIndex] & Piece.Black) !== 0) {
-                        return  false;
+        if ((currentPiece & Piece.White) !== 0) {
+            if ((this.squares[newIndex] & Piece.Black) !== 0) {
+                return true;
+            } else if ((this.squares[newIndex] & Piece.White) !== 0) {
+                return  false;
+            }
+        } else {
+            if ((this.squares[newIndex] & Piece.White) !== 0) {
+                return true;
+            } else if ((this.squares[newIndex] & Piece.Black) !== 0) {
+                return  false;
+            }
+        }
+        return true;
+    }
+    canBlock(currentPiece, currentIndex) {
+
+        let controlledSquares = this.getControlledSquares(this.moveNumber % 2 !== 0)
+
+        for (let tile of controlledSquares) {
+            let newBoard = Object.create(Object.getPrototypeOf(this));
+
+            newBoard.squares = this.squares.slice();
+
+            newBoard.draggedPiece = this.draggedPiece;
+            newBoard.draggedPieceIndex = this.draggedPieceIndex;
+            newBoard.pieceImages = this.pieceImages;
+            newBoard.turn = this.turn;
+            newBoard.lastMoved = this.lastMoved;
+            newBoard.lastMovedIndex = this.lastMovedIndex;
+            newBoard.enPassantCapture = this.enPassantCapture;
+            newBoard.enPessantTarget = this.enPessantTarget;
+            newBoard.kingState = this.kingState;
+            newBoard.moveNumber = this.moveNumber;
+
+            newBoard.squares[tile] = newBoard.squares[currentIndex];
+            newBoard.squares[currentIndex] = 0;
+
+            newBoard.checkState();
+
+            if (!newBoard.kingState) {
+                return true
+            }
+        }
+        return false;
+    }
+    getControlledSquares(isWhite) {
+        let controlledSquares = new Set();
+
+        for (let i = 0; i < this.squares.length; i++) {
+            let piece = this.squares[i];
+            if (piece === 0) continue;
+
+            let isPieceWhite = (piece & Piece.White) === Piece.White;
+
+            if (isPieceWhite !== isWhite) {
+                for (let target = 0; target < this.squares.length; target++) {
+                    if (this.isValid(piece, i, target, true)) {
+                        controlledSquares.add(target);
                     }
                 }
-                return true;
+            }
         }
+        return controlledSquares;
+    }
+    checkState() {
+        let occupiedSquares = this.getControlledSquares(this.moveNumber % 2 !== 0)
+
+        if (this.moveNumber % 2 === 0) {
+            if (occupiedSquares.has(this.findKingLocation(false))) {
+                this.kingState = true;
+                console.log("The black king is in check")
+            }
+        } else {
+            if (occupiedSquares.has(this.findKingLocation(true))) {
+                this.kingState = true;
+                console.log("The white king is in check")
+            }
+        }
+    }
     kingMove(currentIndex, newIndex) {
         const row1 = Math.floor(currentIndex / 8);
         const col1 = currentIndex % 8;
@@ -396,34 +520,25 @@ class Board {
 
         return false;
     }
-    isValid(currentPiece, currentIndex, newIndex) {
-        let piece = currentPiece & 0b111;
-
-        if (piece === 1) {
-            return this.kingMove(currentIndex, newIndex) && this.canCapture(currentPiece, currentIndex, newIndex)
+    findKingLocation(isWhite) {
+        if (isWhite) {
+            for (let i = 0; i <= this.squares.length; i++) {
+                if ((this.squares[i] & Piece.White) === 8) {
+                    if (this.squares[i] === 9) {
+                        return i;
+                    }
+                }
+            }
+        } else {
+            for (let j = 0; j <= this.squares.length; j++) {
+                if ((this.squares[j] & Piece.White) === 0) {
+                    if (this.squares[j] === 17) {
+                        return j;
+                    }
+                }
+            }
         }
 
-        if (piece === 2) {
-            return this.pawnMove(currentPiece, currentIndex, newIndex) && this.canCapture(currentPiece, currentIndex, newIndex)
-        }
-
-        if (piece === 3) {
-            return this.knightMove(currentIndex, newIndex) && this.canCapture(currentPiece, currentIndex, newIndex)
-        }
-
-        if (piece === 4) {
-            return this.bishopMove(currentIndex, newIndex) && this.canCapture(currentPiece, currentIndex, newIndex)
-        }
-
-        if (piece === 5) {
-            return this.rookMove(currentIndex, newIndex) && this.canCapture(currentPiece, currentIndex, newIndex)
-        }
-
-        if (piece === 6) {
-            return (this.rookMove(currentIndex, newIndex) || this.bishopMove(currentIndex, newIndex)) && this.canCapture(currentPiece, currentIndex, newIndex);
-        }
-
-        return false;
     }
     colorTile(color, newIndex) {
         this.squares[newIndex] = this.draggedPiece;
@@ -451,7 +566,7 @@ class Board {
         this.drawPieces();
         return false;
     }
-}
+s}
 
 function isDigit(char) {
     return !isNaN(char) && char.trim() !== '';
