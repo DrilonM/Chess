@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="SELECTIVE" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="1dff4cf6-8b3e-46a0-8fc7-f367d3291bc8" name="Changes" comment="added en passant">
+      <change beforePath="$PROJECT_DIR$/script.js" beforeDir="false" afterPath="$PROJECT_DIR$/script.js" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="MarkdownSettingsMigration">
+    <option name="stateVersion" value="1" />
+  </component>
+  <component name="ProjectId" id="2swxvcIOoRsZAYrLStHCDBUR4Iv" />
+  <component name="ProjectViewState">
+    <option name="autoscrollFromSource" value="true" />
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;RunOnceActivity.OpenProjectViewOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;ToolWindowRun.ShowToolbar&quot;: &quot;false&quot;,
+    &quot;WebServerToolWindowFactoryState&quot;: &quot;false&quot;,
+    &quot;last_opened_file_path&quot;: &quot;C:/Users/dwlon/Desktop/New folder/Chess Gitlab/Chess&quot;,
+    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
+    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
+    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
+    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
+  }
+}</component>
+  <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="1dff4cf6-8b3e-46a0-8fc7-f367d3291bc8" name="Changes" comment="" />
+      <created>1739380670583</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1739380670583</updated>
+      <workItem from="1739380677301" duration="37000" />
+      <workItem from="1739380714647" duration="260000" />
+      <workItem from="1739381409185" duration="2254000" />
+      <workItem from="1739389568336" duration="6379000" />
+      <workItem from="1739401899072" duration="3456000" />
+      <workItem from="1739443169232" duration="4095000" />
+      <workItem from="1739471091094" duration="4293000" />
+      <workItem from="1748386564250" duration="273000" />
+      <workItem from="1748432331363" duration="6965000" />
+      <workItem from="1748449061551" duration="6363000" />
+      <workItem from="1749255240197" duration="1652000" />
+      <workItem from="1749297926026" duration="9377000" />
+      <workItem from="1749310970570" duration="2168000" />
+    </task>
+    <task id="LOCAL-00001" summary="Added board + pieces. Added basic movement of pieces.">
+      <created>1739380951063</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1739380951063</updated>
+    </task>
+    <task id="LOCAL-00002" summary="Added basic capture logic.">
+      <created>1739383478171</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1739383478171</updated>
+    </task>
+    <task id="LOCAL-00003" summary="Added basic capture logic.">
+      <created>1739383506541</created>
+      <option name="number" value="00003" />
+      <option name="presentableId" value="LOCAL-00003" />
+      <option name="project" value="LOCAL" />
+      <updated>1739383506541</updated>
+    </task>
+    <task id="LOCAL-00004" summary="Added movement and capture logic for all pieces. Canvas now resizes with the window.">
+      <created>1739395929956</created>
+      <option name="number" value="00004" />
+      <option name="presentableId" value="LOCAL-00004" />
+      <option name="project" value="LOCAL" />
+      <updated>1739395929956</updated>
+    </task>
+    <task id="LOCAL-00005" summary="fixed Queen movement glitch. Added gray and red highlights when placing correctly and incorrectly.">
+      <created>1739405405932</created>
+      <option name="number" value="00005" />
+      <option name="presentableId" value="LOCAL-00005" />
+      <option name="project" value="LOCAL" />
+      <updated>1739405405932</updated>
+    </task>
+    <task id="LOCAL-00006" summary="Added a game state and turns">
+      <created>1739446639972</created>
+      <option name="number" value="00006" />
+      <option name="presentableId" value="LOCAL-00006" />
+      <option name="project" value="LOCAL" />
+      <updated>1739446639972</updated>
+    </task>
+    <task id="LOCAL-00007" summary="Refactored code. Fixed bugs.">
+      <created>1739475448305</created>
+      <option name="number" value="00007" />
+      <option name="presentableId" value="LOCAL-00007" />
+      <option name="project" value="LOCAL" />
+      <updated>1739475448305</updated>
+    </task>
+    <option name="localTasksCounter" value="8" />
+    <servers />
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="3" />
+  </component>
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State />
+          </value>
+        </entry>
+      </map>
+    </option>
+  </component>
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value="Added board + pieces. Added basic movement of pieces." />
+    <MESSAGE value="Added basic capture logic." />
+    <MESSAGE value="Added movement and capture logic for all pieces. Canvas now resizes with the window." />
+    <MESSAGE value="fixed Queen movement glitch. Added gray and red highlights when placing correctly and incorrectly." />
+    <MESSAGE value="Added a game state and turns" />
+    <MESSAGE value="Refactored code. Fixed bugs." />
+    <MESSAGE value="added en passant" />
+    <option name="LAST_COMMIT_MESSAGE" value="added en passant" />
+  </component>
+</project>
