@@ -1,4 +1,3 @@
-# Chess
+# Chess Application
 
-## Advanced Web Design Project
-
+## 221512 - Drilon Mehmedi
