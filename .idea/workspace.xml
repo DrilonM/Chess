@@ -4,7 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="1dff4cf6-8b3e-46a0-8fc7-f367d3291bc8" name="Changes" comment="added en passant">
+    <list default="true" id="1dff4cf6-8b3e-46a0-8fc7-f367d3291bc8" name="Changes" comment="added castling &amp; promotion.">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/script.js" beforeDir="false" afterPath="$PROJECT_DIR$/script.js" afterDir="false" />
     </list>
@@ -61,7 +61,7 @@
       <workItem from="1749560230136" duration="13000" />
       <workItem from="1749560318845" duration="9221000" />
       <workItem from="1749591022385" duration="4072000" />
-      <workItem from="1749759277274" duration="3685000" />
+      <workItem from="1749759277274" duration="4436000" />
     </task>
     <task id="LOCAL-00001" summary="Added board + pieces. Added basic movement of pieces.">
       <created>1739380951063</created>
@@ -112,7 +112,14 @@
       <option name="project" value="LOCAL" />
       <updated>1739475448305</updated>
     </task>
-    <option name="localTasksCounter" value="8" />
+    <task id="LOCAL-00008" summary="added castling &amp; promotion.">
+      <created>1749763303483</created>
+      <option name="number" value="00008" />
+      <option name="presentableId" value="LOCAL-00008" />
+      <option name="project" value="LOCAL" />
+      <updated>1749763303483</updated>
+    </task>
+    <option name="localTasksCounter" value="9" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -137,6 +144,7 @@
     <MESSAGE value="Added a game state and turns" />
     <MESSAGE value="Refactored code. Fixed bugs." />
     <MESSAGE value="added en passant" />
-    <option name="LAST_COMMIT_MESSAGE" value="added en passant" />
+    <MESSAGE value="added castling &amp; promotion." />
+    <option name="LAST_COMMIT_MESSAGE" value="added castling &amp; promotion." />
   </component>
 </project>

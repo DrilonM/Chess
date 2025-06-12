@@ -287,6 +287,8 @@ class Board {
                 let piece = this.draggedPiece;
                 let index = this.draggedPieceIndex;
 
+                let row = Math.floor(newIndex / 8);
+
                 if (newFile < 0 || newFile > 7 || newRank < 0 || newRank > 7) {
                     newIndex = this.draggedPieceIndex;
                 } else {
@@ -294,17 +296,6 @@ class Board {
                     let col1 = index % 8;
                     let row2 = Math.floor(newIndex / 8);
                     let col2 = newIndex % 8;
-
-                    console.log(row2)
-
-                    if (piece & 0b111 === Piece.Pawn) {
-                        console.log("here")
-                        if (row2 === 7 || 0) {
-                            console.log("HERERE")
-                            this.draggedPiece = Piece.Queen;
-                            this.drawPieces()
-                        }
-                    }
 
                     // Castling Logic
                     if ((piece & 0b111) === Piece.King && row1 === row2 && Math.abs(col2 - col1) === 2) {
@@ -371,6 +362,7 @@ class Board {
 
                 isDragging = this.colorTile("#868686", newIndex)
 
+
                 if (Math.abs(this.draggedPieceIndex - newIndex) > 8) {
                     this.enPassantSquare = newIndex;
                     this.enPassantTarget = true;
@@ -397,6 +389,15 @@ class Board {
                     this.enPassantTarget = false;
                     this.enPassantSquare = null;
                     this.enPassantCount = 0;
+                }
+
+                // Promotion
+                if ((piece & 0b111) === Piece.Pawn) {
+                    if (row === 7 || row === 0) {
+                        const colorBits = piece & ~0b111;
+                        this.draggedPiece = colorBits | Piece.Queen;
+                        isDragging = this.colorTile("#868686", newIndex);
+                    }
                 }
 
                 this.checkGameEnd()
