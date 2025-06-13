@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title> Puzzles </title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="container">
+    <button onclick="nextPuzzle()"> Next Puzzle </button>
+    <div>
+      <div>
+        <canvas></canvas>
+      </div>
+      <div>
+        <div id="moveList"> </div>
+      </div>
+    </div>
+</div>
+</body>
+<script src="script.js"></script>
+<script>
+
+  document.addEventListener("DOMContentLoaded", function () {
+    nextPuzzle();
+  });
+
+</script>
+</html>

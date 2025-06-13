@@ -40,13 +40,17 @@ class Board {
         this.enPassantCount = 0;
         this.controlledSquares = this.getControlledSquares(this.moveNumber % 2 !== 0)
         this.kingChecked = false;
-
         this.whiteKingMoved = false;
         this.blackKingMoved = false;
         this.whiteRookMoved = { kingSide: false, queenSide: false };
         this.blackRookMoved = { kingSide: false, queenSide: false };
 
         this.moveHistory = []
+
+        this.solutionIndex = null;
+        this.solution = null;
+
+        this.gameOver = false;
     }
 
     copy() {
@@ -73,15 +77,34 @@ class Board {
     drawBoard() {
         for (let file = 0; file < 8; file++) {
             for (let rank = 0; rank < 8; rank++) {
-                c.fillStyle = (file + rank) % 2 === 0 ? "#f6f6f6" : "#3e3e3e";
-                c.strokeStyle = "black";
+                c.fillStyle = (file + rank) % 2 === 0 ? "#f6f6f6" : "steelblue";
+                c.strokeStyle = "darkgray";
 
                 let x = originX + rank * tileSize;
                 let y = originY + file * tileSize;
 
                 c.fillRect(x, y, tileSize, tileSize);
                 c.strokeRect(x, y, tileSize, tileSize);
+
+                if (rank === 0) {
+                    c.fillStyle = "ivory";
+                    c.font = "16px Arial";
+                    c.textAlign = "right";
+                    c.textBaseline = "middle";
+                    c.fillText(""+(8 - file), x - 10, y + tileSize / 2);
+                }
+
+                if (file === 7) {
+                    c.fillStyle = "ivory";
+                    c.font = "16px Arial";
+                    c.textAlign = "center";
+                    c.textBaseline = "bottom";
+                    let letter = String.fromCharCode(97 + rank);
+                    c.fillText(letter, x + tileSize / 2, y + tileSize + 24);
+                }
             }
+
+
         }
     }
     initializePieces(fen) {
@@ -95,7 +118,7 @@ class Board {
         pieces.forEach(piece => {
             colors.forEach(color => {
                 let img = new Image();
-                img.src = `/pieces/${color}-${piece}.png`;
+                img.src = `pieces/${color}-${piece}.png`;
                 this.pieceImages[`${color}-${piece}`] = img;
             });
         });
@@ -175,7 +198,7 @@ class Board {
 
             c.beginPath();
             c.arc(x, y, 15, 0, 2 * Math.PI);
-            c.fillStyle = "gray";
+            c.fillStyle = "lightblue";
             c.fill();
         }
     }
@@ -183,6 +206,7 @@ class Board {
         let isDragging = false;
 
         canvas.addEventListener("mousedown", (e) => {
+            if (this.gameOver) return;
             let mouseX = e.offsetX;
             let mouseY = e.offsetY;
 
@@ -249,140 +273,131 @@ class Board {
                 let mouseX = e.offsetX;
                 let mouseY = e.offsetY;
 
-                let newFile = Math.floor((mouseY - originY) / tileSize);
                 let newRank = Math.floor((mouseX - originX) / tileSize);
+                let newFile = Math.floor((mouseY - originY) / tileSize);
                 let newIndex = newFile * 8 + newRank;
 
-                if (this.draggedPieceIndex === newIndex) {
-                    newIndex = this.draggedPieceIndex;
-                    isDragging = this.colorTile("#f55538", newIndex)
+                let tempIndex = this.draggedPieceIndex;
+                let tempPiece = this.draggedPiece;
+                let tempTarget = this.squares[newIndex];
+
+                if (newRank < 0 || newRank > 7 || newFile < 0 || newFile > 7 || this.draggedPieceIndex === newIndex) {
+                    isDragging = this.colorTile("#f55538", this.draggedPieceIndex);
+                    this.draggedPiece = null;
+                    this.draggedPieceIndex = null;
                     return;
                 }
 
                 if (!this.isValid(this.draggedPiece, this.draggedPieceIndex, newIndex)) {
-                    if (newIndex === this.draggedPieceIndex) {
-                        isDragging = this.colorTile("gray", newIndex)
-                        return;
-                    }
-                    newIndex = this.draggedPieceIndex;
-                    isDragging = this.colorTile("#f55538", newIndex)
+                    isDragging = this.colorTile("#f55538", this.draggedPieceIndex);
+                    this.draggedPiece = null;
+                    this.draggedPieceIndex = null;
                     return;
                 }
-
 
                 if (!this.simulateMove(this.draggedPiece, this.draggedPieceIndex, newIndex)) {
-                    newIndex = this.draggedPieceIndex;
-                    isDragging = this.colorTile("#f55538", newIndex)
-
-                    let king = this.findKing(this.moveNumber % 2 !== 0)
-                    this.highlightTile("#f55538", king)
-
+                    isDragging = this.colorTile("#f55538", this.draggedPieceIndex);
+                    let king = this.findKing(this.moveNumber % 2 !== 0);
+                    this.highlightTile("#f55538", king);
+                    this.draggedPiece = null;
+                    this.draggedPieceIndex = null;
                     return;
                 }
 
-                if (!this.controlledSquares.has(newIndex)) {
-                    this.kingChecked = false;
-                }
+                let captured = this.squares[newIndex] !== 0 || (this.enPassantTarget && (this.draggedPiece & 0b111) === Piece.Pawn && newIndex === this.enPassantSquare);
 
                 let piece = this.draggedPiece;
                 let index = this.draggedPieceIndex;
 
                 let row = Math.floor(newIndex / 8);
+                let col = newIndex % 8;
 
-                if (newFile < 0 || newFile > 7 || newRank < 0 || newRank > 7) {
-                    newIndex = this.draggedPieceIndex;
+                // Handle castling
+                if ((piece & 0b111) === Piece.King && Math.abs(col - (index % 8)) === 2) {
+                    let rowKing = Math.floor(index / 8);
+                    if (col === 6) { // KingSide
+                        let rookFrom = rowKing * 8 + 7;
+                        let rookTo = rowKing * 8 + 5;
+                        this.squares[rookTo] = this.squares[rookFrom];
+                        this.squares[rookFrom] = 0;
+
+                        if ((piece & Piece.White) !== 0) this.whiteRookMoved.kingSide = true;
+                        else this.blackRookMoved.kingSide = true;
+                    } else if (col === 2) { // QueenSide
+                        let rookFrom = rowKing * 8;
+                        let rookTo = rowKing * 8 + 3;
+                        this.squares[rookTo] = this.squares[rookFrom];
+                        this.squares[rookFrom] = 0;
+
+                        if ((piece & Piece.White) !== 0) this.whiteRookMoved.queenSide = true;
+                        else this.blackRookMoved.queenSide = true;
+                    }
+
+                    if ((piece & Piece.White) !== 0) this.whiteKingMoved = true;
+                    else this.blackKingMoved = true;
+
+                    this.squares[newIndex] = piece;
+                    this.squares[index] = 0;
                 } else {
-                    let row1 = Math.floor(index / 8);
-                    let col1 = index % 8;
-                    let row2 = Math.floor(newIndex / 8);
-                    let col2 = newIndex % 8;
+                    this.squares[index] = 0;
+                    this.squares[newIndex] = piece;
 
-                    // Castling Logic
-                    if ((piece & 0b111) === Piece.King && row1 === row2 && Math.abs(col2 - col1) === 2) {
-                        if (col2 === 6) { // KingSide
-                            let rookFrom = row1 * 8 + 7;
-                            let rookTo = row1 * 8 + 5;
-                            this.squares[rookTo] = this.squares[rookFrom];
-                            this.squares[rookFrom] = 0;
+                    let isWhite = (piece & Piece.White) !== 0;
 
-                            if ((piece & Piece.White) !== 0) this.whiteRookMoved.kingSide = true;
-                            else this.blackRookMoved.kingSide = true;
-                        } else if (col2 === 2) { // QueenSide
-                            let rookFrom = row1 * 8 + 0;
-                            let rookTo = row1 * 8 + 3;
-                            this.squares[rookTo] = this.squares[rookFrom];
-                            this.squares[rookFrom] = 0;
-
-                            if ((piece & Piece.White) !== 0) this.whiteRookMoved.queenSide = true;
+                    if ((piece & 0b111) === Piece.King) {
+                        if (isWhite) this.whiteKingMoved = true;
+                        else this.blackKingMoved = true;
+                    }
+                    if ((piece & 0b111) === Piece.Rook) {
+                        let startRow = isWhite ? 0 : 7;
+                        if (index === startRow * 8) {
+                            if (isWhite) this.whiteRookMoved.queenSide = true;
                             else this.blackRookMoved.queenSide = true;
                         }
-
-                        if ((piece & Piece.White) !== 0) this.whiteKingMoved = true;
-                        else this.blackKingMoved = true;
-
-                        this.squares[newIndex] = piece;
-                        this.squares[index] = 0;
-                    } else {
-                        this.squares[index] = 0;
-                        this.squares[newIndex] = piece;
-
-                        let isWhite = (piece & Piece.White) !== 0;
-
-                        if (piece & 0b111 === Piece.King) {
-                            if (isWhite) this.whiteKingMoved = true;
-                            else this.blackKingMoved = true;
-                        }
-                        if (piece & 0b111 === Piece.Rook) {
-                            let startRow = isWhite ? 0 : 7;
-                            if (index === startRow * 8 + 0) {
-                                if (isWhite) this.whiteRookMoved.queenside = true;
-                                else this.blackRookMoved.queenside = true;
-                            }
-                            if (index === startRow * 8 + 7) {
-                                if (isWhite) this.whiteRookMoved.kingside = true;
-                                else this.blackRookMoved.kingside = true;
-                            }
+                        if (index === startRow * 8 + 7) {
+                            if (isWhite) this.whiteRookMoved.kingSide = true;
+                            else this.blackRookMoved.kingSide = true;
                         }
                     }
-
-                    this.squares[this.draggedPieceIndex] = 0;
-                    let captured = this.squares[newIndex] !== 0 || (this.enPassantTarget && (piece & 0b111) === Piece.Pawn && newIndex === this.enPassantSquare);
-
-                    if (captured) {
-                        this.enPassantTarget = false;
-                        this.enPassantCount = 0;
-                        this.enPassantSquare = null;
-                    }
-
-                    let moveNotation = this.generateMoveNotation(piece, index, newIndex, captured);
-                    this.moveHistory.push(moveNotation);
-
-                    this.updateMoveList();
                 }
 
-                isDragging = this.colorTile("#868686", newIndex)
+                if (captured) {
+                    this.enPassantTarget = false;
+                    this.enPassantCount = 0;
+                    this.enPassantSquare = null;
+                }
 
 
-                if (Math.abs(this.draggedPieceIndex - newIndex) > 8) {
-                    this.enPassantSquare = newIndex;
+                let moveNotation = this.generateMoveNotation(piece, index, newIndex, captured);
+                this.moveHistory.push(moveNotation);
+                this.updateMoveList();
+
+                isDragging = this.colorTile("#868686", newIndex);
+
+
+                if (Math.abs(this.draggedPieceIndex - newIndex) === 16 && (piece & 0b111) === Piece.Pawn) {
+                    this.enPassantSquare = (index + newIndex) / 2;
                     this.enPassantTarget = true;
-                }
-
-                if (this.enPassantTarget) {
+                    this.enPassantCount = 0;
+                } else if (this.enPassantTarget) {
                     this.enPassantCount++;
                 }
+
+                this.solutionIndex = newIndex;
 
                 this.draggedPiece = null;
                 this.draggedPieceIndex = null;
 
                 this.moveNumber++;
 
-                let isWhite = this.moveNumber % 2 !== 0
-
-                this.controlledSquares = this.getControlledSquares(isWhite)
+                let isWhite = this.moveNumber % 2 !== 0;
+                this.controlledSquares = this.getControlledSquares(isWhite);
 
                 if (this.controlledSquares.has(this.findKing(isWhite))) {
                     this.kingChecked = true;
+                    this.highlightTile("red", this.findKing(isWhite));
+                } else {
+                    this.kingChecked = false;
                 }
 
                 if (this.enPassantCount === 2) {
@@ -393,14 +408,28 @@ class Board {
 
                 // Promotion
                 if ((piece & 0b111) === Piece.Pawn) {
-                    if (row === 7 || row === 0) {
+                    if (row === 0 || row === 7) {
                         const colorBits = piece & ~0b111;
-                        this.draggedPiece = colorBits | Piece.Queen;
-                        isDragging = this.colorTile("#868686", newIndex);
+                        this.squares[newIndex] = colorBits | Piece.Queen;
+                        this.drawBoard();
+                        this.drawPieces();
                     }
                 }
 
-                this.checkGameEnd()
+                if (this.solution !== null) {
+                    if (!this.checkSolution()) {
+                        this.draggedPiece = tempPiece;
+                        this.squares[newIndex] = tempTarget;
+                        this.squares[tempIndex] = tempPiece;
+                        this.moveNumber--;
+                        this.enPassantCount--;
+                        this.moveHistory.pop();
+                        isDragging = this.colorTile("#f55538", tempIndex);
+                        return;
+                    }
+                }
+
+                this.checkGameEnd();
             }
         });
     }
@@ -641,7 +670,7 @@ class Board {
 
         let x = originX + (newIndex % 8) * tileSize;
         let y = originY + Math.floor(newIndex / 8) * tileSize;
-        c.strokeStyle = "black";
+        c.strokeStyle = "darkgray";
         c.fillStyle = color;
         c.fillRect(x, y, 100, 100);
         c.strokeRect(x, y, 100, 100);
@@ -654,7 +683,7 @@ class Board {
         this.drawBoard();
         let x = originX + (index % 8) * tileSize;
         let y = originY + Math.floor(index / 8) * tileSize;
-        c.strokeStyle = "black";
+        c.strokeStyle = "darkgrey";
         c.fillStyle = color;
         c.fillRect(x, y, 100, 100);
         c.strokeRect(x, y, 100, 100);
@@ -725,14 +754,14 @@ class Board {
     availableMoves() {
         let available = [];
 
-        let isWhiteTurn = this.moveNumber % 2 !== 0;
+        let isWhite = this.moveNumber % 2 !== 0;
 
         for (let index = 0; index < this.squares.length; index++) {
             let piece = this.squares[index];
             if (piece === 0) continue;
 
             let isWhitePiece = (piece & Piece.White) === Piece.White;
-            if (isWhitePiece !== isWhiteTurn) continue;
+            if (isWhitePiece !== isWhite) continue;
 
             for (let target = 0; target < this.squares.length; target++) {
                 if (this.isValid(piece, index, target)) {
@@ -748,21 +777,24 @@ class Board {
     checkGameEnd() {
         let moves = this.availableMoves();
 
-        let isWhiteTurn = this.moveNumber % 2 !== 0;
-        let kingIndex = this.findKing(isWhiteTurn);
+        let isWhite = this.moveNumber % 2 !== 0;
+        let kingIndex = this.findKing(isWhite);
         let inCheck = this.controlledSquares.has(kingIndex);
 
         if (moves.length === 0) {
             if (inCheck) {
-                alert(isWhiteTurn ? "Checkmate! Black wins!" : "Checkmate! White wins!");
+                console.log(isWhite ? "Checkmate! Black wins!" : "Checkmate! White wins!");
+                this.gameOver = true;
             } else {
-                alert("Stalemate! It's a draw.");
+                console.log("Stalemate! It's a draw.");
+                this.gameOver = true;
             }
             return true;
         }
 
         if (this.isInsufficientMaterial()) {
-            alert("Draw due to insufficient material.");
+            console.log("Draw due to insufficient material.");
+            this.gameOver = true;
             return true;
         }
 
@@ -854,8 +886,23 @@ class Board {
 
         moveListElement.innerHTML = html;
     }
-}
 
+    checkSolution() {
+        let correct = this.solution.every((move, i) => move === this.moveHistory[i]);
+
+        if (correct) {
+            this.highlightTile("mediumspringgreen", this.solutionIndex);
+
+            if (this.moveHistory.length === this.solution.length) {
+                this.gameOver = true;
+            }
+
+            return true;
+        } else {
+            return false;
+        }
+    }
+}
 function printBoard(squares) {
     let pieceToChar = {
         [Piece.King]: 'K',
@@ -891,8 +938,6 @@ function isDigit(char) {
 function isUpper(char) {
     return /^[A-Z]$/.test(char);
 }
-
-
 function startGame(fen) {
     c.clearRect(0, 0, canvas.width, canvas.height);
 
@@ -909,9 +954,61 @@ function startGame(fen) {
 
     window.onresize = () => resizeCanvas(board);
     resizeCanvas(board);
+
+    document.getElementById("moveList").innerHTML = ""
 }
 
-let fen = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR';
-// let fen = 'rnbqkbnr/8/8/8/8/8/8/RNBQKBNR';
+function loadPuzzle(puzzle) {
+    c.clearRect(0, 0, canvas.width, canvas.height);
 
-startGame(fen)
+    let newCanvas = canvas.cloneNode(true);
+    canvas.replaceWith(newCanvas);
+    canvas = newCanvas;
+    c = canvas.getContext('2d');
+
+    let board = new Board();
+
+    if (puzzle.turn === "Black") board.moveNumber++;
+
+    board.initializePieces(puzzle.fen);
+    board.solution = puzzle.solution;
+    board.drawBoard();
+    board.drawPieces();
+    board.handleDragAndDrop();
+
+    window.onresize = () => resizeCanvas(board);
+    resizeCanvas(board);
+}
+
+let puzzles = [
+    {
+        id: 3,
+        fen: "3r2k1/5ppp/p1p1bn2/1p2N3/4P3/1B3Q2/PPP3PP/5RK1",
+        turn: "White",
+        solution: ["Nxc6"],
+    },
+    {
+        id: 4,
+        fen: "rnbq1rk1/pp3ppp/2p2n2/3pp3/3P4/2P1PN2/PP3PPP/RNBQ1RK1",
+        turn: "White",
+        solution: ["dxe5"],
+    },
+    {
+        id: 5,
+        fen: "2r2rk1/1bqnbppp/p3p3/1p6/4P3/2N2N2/PPP2PPP/2RQ1RK1",
+        turn: "White",
+        solution: ["Nxb5"],
+    }
+];
+
+let i = 0;
+
+function nextPuzzle() {
+    loadPuzzle(puzzles[i])
+    i++;
+}
+
+
+
+
+

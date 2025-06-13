@@ -2,63 +2,27 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title> Chess </title>
-    <style>
-        body {
-            margin: 0;
-        }
-        button {
-            padding: 20px;
-            font-size: 20px;
-        }
-        .container {
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            margin-top: 5vh;
-        }
-
-        #moveList {
-            box-sizing: border-box;
-            margin-top: 100px;
-            border: 2px solid black;
-            border-radius: 20px;
-            background: #3e3e3e;
-            top: 0;
-            height: 800px;
-            width: 240px;
-            font-family: 'Courier New', monospace;
-            font-size: 16px;
-            color: white;
-            padding: 25px;
-            font-weight: bold;
-            overflow-y: auto;
-
-        }
-
-        .container > div {
-
-            display: flex;
-            justify-content: space-evenly;
-
-        }
-    </style>
+    <title> Chess Index  </title>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="container">
+    <div id="indexContainer">
+        <h1>
+            Chess Application
+        </h1>
 
-        <button onclick="startGame('rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR')"> Start New Game </button>
+        <img src="pieces/pawn-logo.png" id="logo" alt="">
 
-        <div>
-            <div>
-                <canvas></canvas>
-            </div>
-            <div>
-                <div id="moveList"> </div>
-            </div>
+        <div id="buttons_container">
+            <a href="game.html"><button>  Start New Game </button></a>
+
+            <a href="puzzles.html"><button>  Practice Puzzles</button> </a>
         </div>
     </div>
 </body>
 </html>
 <script src="script.js"></script>
+<script>
+
+
+</script>

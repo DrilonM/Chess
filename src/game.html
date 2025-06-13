@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title> Chess </title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="container">
+
+    <button onclick="startGame('rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR')"> Restart Game </button>
+    <div>
+      <div>
+        <canvas></canvas>
+      </div>
+      <div>
+        <div id="moveList"> </div>
+      </div>
+    </div>
+  </div>
+</body>
+
+
+
+</html>
+
+<script src="script.js"></script>
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    let fen = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR';
+    startGame(fen);
+  });
+</script>
