@@ -8,8 +8,13 @@
 <body>
   <div class="container">
 
-    <button onclick="startGame('rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR')"> Restart Game </button>
-    <div>
+    <div class="header">
+      <button onclick="startGame('rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR')"> Restart Game </button>
+
+      <h2 id="label"> </h2>
+    </div>
+
+    <div id="game_container">
       <div>
         <canvas></canvas>
       </div>

@@ -49,6 +49,8 @@ class Board {
 
         this.solutionIndex = null;
         this.solution = null;
+        this.opponentMoves = null;
+        this.maxMoves = 0;
 
         this.gameOver = false;
     }
@@ -268,7 +270,7 @@ class Board {
             }
         });
 
-        canvas.addEventListener("mouseup", (e) => {
+        canvas.addEventListener("mouseup", async (e) => {
             if (this.draggedPiece !== null && isDragging) {
                 let mouseX = e.offsetX;
                 let mouseY = e.offsetY;
@@ -367,7 +369,6 @@ class Board {
                     this.enPassantSquare = null;
                 }
 
-
                 let moveNotation = this.generateMoveNotation(piece, index, newIndex, captured);
                 this.moveHistory.push(moveNotation);
                 this.updateMoveList();
@@ -409,7 +410,7 @@ class Board {
                 // Promotion
                 if ((piece & 0b111) === Piece.Pawn) {
                     if (row === 0 || row === 7) {
-                        const colorBits = piece & ~0b111;
+                        let colorBits = piece & ~0b111;
                         this.squares[newIndex] = colorBits | Piece.Queen;
                         this.drawBoard();
                         this.drawPieces();
@@ -417,7 +418,9 @@ class Board {
                 }
 
                 if (this.solution !== null) {
-                    if (!this.checkSolution()) {
+                    let isCorrect = await this.checkSolution();
+                    console.log(isCorrect + " HERER")
+                    if (!isCorrect) {
                         this.draggedPiece = tempPiece;
                         this.squares[newIndex] = tempTarget;
                         this.squares[tempIndex] = tempPiece;
@@ -425,6 +428,7 @@ class Board {
                         this.enPassantCount--;
                         this.moveHistory.pop();
                         isDragging = this.colorTile("#f55538", tempIndex);
+
                         return;
                     }
                 }
@@ -773,7 +777,7 @@ class Board {
         }
 
         return available;
-    }
+    }F
     checkGameEnd() {
         let moves = this.availableMoves();
 
@@ -783,17 +787,17 @@ class Board {
 
         if (moves.length === 0) {
             if (inCheck) {
-                console.log(isWhite ? "Checkmate! Black wins!" : "Checkmate! White wins!");
+                document.getElementById("label").innerHTML = (isWhite ? "Checkmate! Black wins!" : "Checkmate! White wins!");
                 this.gameOver = true;
             } else {
-                console.log("Stalemate! It's a draw.");
+                document.getElementById("label").innerHTML = "Stalemate! It's a draw.";
                 this.gameOver = true;
             }
             return true;
         }
 
         if (this.isInsufficientMaterial()) {
-            console.log("Draw due to insufficient material.");
+            document.getElementById("label").innerHTML ="Draw due to insufficient material.";
             this.gameOver = true;
             return true;
         }
@@ -886,21 +890,82 @@ class Board {
 
         moveListElement.innerHTML = html;
     }
+    async checkSolution() {
+        let j = 0;
+        let correct = this.moveHistory.every((move, i) => {
+            if (i % 2 === 0) {
+                return move === this.solution[j++];
+            }
+            return true;
+        });
 
-    checkSolution() {
-        let correct = this.solution.every((move, i) => move === this.moveHistory[i]);
+        console.log(correct)
+
+        let label = document.getElementById("label")
+        this.moveHistory.every((move, i) => console.log(move))
 
         if (correct) {
-            this.highlightTile("mediumspringgreen", this.solutionIndex);
+            this.highlightTile("#80ff80", this.solutionIndex);
 
-            if (this.moveHistory.length === this.solution.length) {
+            let isWhite = this.moveNumber % 2 !== 0;
+
+            if (this.controlledSquares.has(this.findKing(isWhite))) {
+                this.kingChecked = true;
+                this.highlightTile("red", this.findKing(isWhite));
+            } else {
+                this.kingChecked = false;
+            }
+
+            label.innerHTML = this.moveHistory[this.moveHistory.length - 1] + " is Correct!"
+            label.style.backgroundColor = "seagreen"
+
+            if (this.moveHistory.length === this.maxMoves) {
+                label.innerHTML =  "Success!"
                 this.gameOver = true;
+            }
+
+            if (this.opponentMoves.length > 0) {
+                let moves = this.opponentMoves.shift();
+
+                let index = moves[0]
+                let newIndex = moves[1]
+                let piece = this.squares[index]
+
+                await this.makeMove(piece, index, newIndex);
+
+                let captured = this.squares[newIndex] !== 0 || (this.enPassantTarget && (piece & 0b111) === Piece.Pawn && newIndex === this.enPassantSquare);
+
+                let moveNotation = this.generateMoveNotation(piece, index, newIndex, captured);
+                this.moveHistory.push(moveNotation);
+                this.updateMoveList();
+                this.moveNumber++;
+
+                let isWhite = this.moveNumber % 2 !== 0;
+                if (this.controlledSquares.has(this.findKing(isWhite))) {
+                    this.kingChecked = true;
+                    this.highlightTile("red", this.findKing(isWhite));
+                } else {
+                    this.kingChecked = false;
+                }
             }
 
             return true;
         } else {
+            document.getElementById("label").innerHTML = "Incorrect!"
+            label.style.backgroundColor = "darkred"
             return false;
         }
+    }
+
+    makeMove(piece, index, newIndex) {
+        return new Promise(resolve => {
+            setTimeout(() => {
+                this.squares[index] = 0;
+                this.squares[newIndex] = piece;
+                this.highlightTile("#868686", newIndex);
+                resolve();
+            }, 250);
+        });
     }
 }
 function printBoard(squares) {
@@ -956,8 +1021,8 @@ function startGame(fen) {
     resizeCanvas(board);
 
     document.getElementById("moveList").innerHTML = ""
+    document.getElementById("label").innerHTML = ""
 }
-
 function loadPuzzle(puzzle) {
     c.clearRect(0, 0, canvas.width, canvas.height);
 
@@ -972,33 +1037,60 @@ function loadPuzzle(puzzle) {
 
     board.initializePieces(puzzle.fen);
     board.solution = puzzle.solution;
+    board.opponentMoves = puzzle.opponentMoves;
+    board.maxMoves = puzzle.maxMoves;
     board.drawBoard();
     board.drawPieces();
     board.handleDragAndDrop();
 
     window.onresize = () => resizeCanvas(board);
     resizeCanvas(board);
+
+    document.getElementById("moveList").innerHTML = ""
+    document.getElementById("label").innerHTML = puzzle.turn + " to move."
 }
 
 let puzzles = [
     {
-        id: 3,
-        fen: "3r2k1/5ppp/p1p1bn2/1p2N3/4P3/1B3Q2/PPP3PP/5RK1",
+        id: 1,
+        fen: "4r3/7p/p2p1kp1/1ppP4/2P3PP/1P2RK2/P7/8",
+        turn: "Black",
+        opponentMoves: [],
+        maxMoves: 1,
+        solution: ["Rxe3"],
+    },
+    {
+        id: 2,
+        fen: "r5k1/p4p2/2bp3Q/2p2q2/3b1r2/5N1P/PPP5/R4R1K",
         turn: "White",
-        solution: ["Nxc6"],
+        opponentMoves: [[37, 38], [29, 38]],
+        maxMoves: 5,
+        solution: ["Rg1", "Rxg4", "hxg4"],
+    },
+    {
+        id: 3,
+        fen: "1r2kb1r/Qb1q1pp1/1p2p3/2pn4/1P4Pp/P1N2P2/1B1P1PBP/R3R1K1",
+        turn: "Black",
+        opponentMoves: [[8, 9]],
+        maxMoves: 3,
+        solution: ["Ra8", "Qxb7"],
     },
     {
         id: 4,
-        fen: "rnbq1rk1/pp3ppp/2p2n2/3pp3/3P4/2P1PN2/PP3PPP/RNBQ1RK1",
+        fen: "3r4/5pp1/p2kb2p/3p4/8/2R1N3/PrP2PPP/3R2K1",
         turn: "White",
-        solution: ["dxe5"],
+        opponentMoves: [[19, 11]],
+        maxMoves: 3,
+        solution: ["Nc4", "Nxb2"],
     },
     {
         id: 5,
-        fen: "2r2rk1/1bqnbppp/p3p3/1p6/4P3/2N2N2/PPP2PPP/2RQ1RK1",
-        turn: "White",
-        solution: ["Nxb5"],
-    }
+        fen: "r2qk1nr/pp3ppp/2n1b3/1Bb1P3/3pN3/5N2/PP3PPP/R1BQK2R",
+        turn: "Black",
+        opponentMoves: [[58, 51]],
+        maxMoves: 3,
+        solution: ["Qa5", "Qxb5"],
+    },
 ];
 
 let i = 0;
