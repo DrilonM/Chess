@@ -9,14 +9,19 @@
   <div class="container">
 
     <div class="header">
-      <button onclick="startGame('rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR')"> Restart Game </button>
+      <div>
+
+        <button onclick="startGame('rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR')"> Restart Game </button>
+
+        <button onclick="flipBoard()"> Flip Board </button>
+      </div>
 
       <h2 id="label"> </h2>
     </div>
 
     <div id="game_container">
-      <div>
-        <canvas></canvas>
+      <div id="board-wrapper">
+        <canvas id="chessboard"></canvas>
       </div>
       <div>
         <div id="moveList"> </div>
