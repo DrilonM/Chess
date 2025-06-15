@@ -18,6 +18,7 @@ function resizeCanvas(board) {
     board.drawBoard();
     board.drawPieces();
 }
+
 class Piece {
     static King = 1;
     static Pawn = 2;
@@ -123,10 +124,6 @@ class Board {
             }
         }
     }
-    initializePieces(fen) {
-        this.loadFromFen(fen);
-        this.preloadImages();
-    }
     preloadImages() {
         let pieces = ["king", "pawn", "knight", "bishop", "rook", "queen"];
         let colors = ["white", "black"];
@@ -140,17 +137,6 @@ class Board {
         });
 
         setTimeout(() => this.drawPieces(), 100);
-    }
-    getPiece(value) {
-        switch (value) {
-            case Piece.King: return "king";
-            case Piece.Pawn: return "pawn";
-            case Piece.Knight: return "knight";
-            case Piece.Bishop: return "bishop";
-            case Piece.Rook: return "rook";
-            case Piece.Queen: return "queen";
-            default: return null;
-        }
     }
     loadFromFen(fen) {
         let pieceFromSymbol = {
@@ -180,6 +166,21 @@ class Board {
             }
         }
     }
+    initializePieces(fen) {
+        this.loadFromFen(fen);
+        this.preloadImages();
+    }
+    getPiece(value) {
+        switch (value) {
+            case Piece.King: return "king";
+            case Piece.Pawn: return "pawn";
+            case Piece.Knight: return "knight";
+            case Piece.Bishop: return "bishop";
+            case Piece.Rook: return "rook";
+            case Piece.Queen: return "queen";
+            default: return null;
+        }
+    }
     drawPieces() {
         this.squares.forEach((square, index) => {
             if (square !== 0) {
@@ -196,17 +197,6 @@ class Board {
             }
         });
     }
-    displayMoves(currentPiece, currentIndex) {
-        let validMoves = []
-
-        for (let tile in this.squares) {
-            if (this.isValid(currentPiece, currentIndex, parseInt(tile)) && this.simulateMove(currentPiece, currentIndex, parseInt(tile))) {
-                validMoves.push(parseInt(tile))
-            }
-        }
-
-        this.highlightMoves(validMoves)
-    }
     highlightMoves(validMoves) {
         for (let move of validMoves) {
             let x = originX + (move % 8) * tileSize + tileSize / 2;
@@ -217,6 +207,17 @@ class Board {
             c.fillStyle = "lightblue";
             c.fill();
         }
+    }
+    displayMoves(currentPiece, currentIndex) {
+        let validMoves = []
+
+        for (let tile in this.squares) {
+            if (this.isValid(currentPiece, currentIndex, parseInt(tile)) && this.simulateMove(currentPiece, currentIndex, parseInt(tile))) {
+                validMoves.push(parseInt(tile))
+            }
+        }
+
+        this.highlightMoves(validMoves)
     }
     handleDragAndDrop() {
         let isDragging = false;
@@ -498,16 +499,6 @@ class Board {
 
             }
         });
-    }
-
-    flip() {
-        this.flipped = !board.flipped;
-        this.squares.reverse();
-        this.drawBoard()
-        this.drawPieces()
-    }
-    getLogicalIndex(index) {
-        return this.flipped ? 63 - index : index;
     }
     canCapture(currentPiece, currentIndex, newIndex) {
         // This checks colors;
@@ -1052,6 +1043,15 @@ class Board {
             }, 250);
         });
     }
+    flip() {
+        this.flipped = !board.flipped;
+        this.squares.reverse();
+        this.drawBoard()
+        this.drawPieces()
+    }
+    getLogicalIndex(index) {
+        return this.flipped ? 63 - index : index;
+    }
 }
 function printBoard(squares) {
     let pieceToChar = {
@@ -1088,7 +1088,6 @@ function isDigit(char) {
 function isUpper(char) {
     return /^[A-Z]$/.test(char);
 }
-
 
 let board = new Board();
 
@@ -1240,7 +1239,7 @@ function nextPuzzle() {
             finished = true;
         }
     } else {
-        const randomIndex = Math.floor(Math.random() * puzzles.length);
+        let randomIndex = Math.floor(Math.random() * puzzles.length);
         loadPuzzle(puzzles[randomIndex]);
     }
     document.getElementById("label").style.backgroundColor = "steelblue"
